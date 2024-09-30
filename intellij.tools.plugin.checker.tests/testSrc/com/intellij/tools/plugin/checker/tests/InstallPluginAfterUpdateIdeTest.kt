@@ -71,10 +71,10 @@ class InstallPluginAfterUpdateIdeTest {
       val case = TestCases.IU.GradleJitPackSimple
         .copy(
           ideInfo = IU.copy(
-            buildNumber = configurationData.version,
             downloadURI = URI(configurationData.url)
           )
         )
+      println("Case: $case")
       val plugins = MarketplaceClient.getPluginsForBuild(configurationData.type, configurationData.version).take(20)
 
 
@@ -85,7 +85,7 @@ class InstallPluginAfterUpdateIdeTest {
   }
 
 
-  @ParameterizedTest(name = "Validate plugin {1}")
+  @ParameterizedTest(name = "{1}")
   @MethodSource("pluginsProvider")
   fun validatePlugin(data: Pair<TestCase<RemoteArchiveProjectInfo>, Plugin>, pluginName: String) {
     val (case, plugin) = data
