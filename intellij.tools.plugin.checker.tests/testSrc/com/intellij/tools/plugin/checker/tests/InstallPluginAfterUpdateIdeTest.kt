@@ -73,7 +73,7 @@ class InstallPluginAfterUpdateIdeTest {
 
         private fun createTestContext(case: TestCase<*>, configurator: IDETestContext.() -> Unit = {}): IDETestContext {
             val testContext = Starter
-                .newContext(testName = CurrentTestMethod.hyphenateWithClass(), testCase = case)
+                .newContext(testName = "install plugin test", testCase = case)
                 .prepareProjectCleanImport()
                 .setSharedIndexesDownload(enable = true)
                 .setLicense(System.getenv("LICENSE_KEY"))
@@ -99,6 +99,7 @@ class InstallPluginAfterUpdateIdeTest {
             val plugins = MarketplaceClient.getPluginsForBuild(configurationData.type, context.ide.build).take(20)
 
 
+            println("Current batch index: ${configurationData.currentBatchIndex}")
             val pluginsForThisBucket = splitIntoBuckets(plugins)[configurationData.currentBatchIndex]
 
             return pluginsForThisBucket.map { Arguments.of(context to it, it.name) }
