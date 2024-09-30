@@ -43,7 +43,6 @@ class InstallPluginAfterUpdateIdeTest {
       }
 
       val propertyNode = buildProperties.path("property")
-      initPluginCheckerDI()
 
       return ConfigurationData(
         propertyNode.getProperty("ide.type"),
@@ -67,6 +66,7 @@ class InstallPluginAfterUpdateIdeTest {
 
     @JvmStatic
     fun pluginsProvider(): List<Arguments> {
+      initPluginCheckerDI()
       val configurationData = getConfigurationData()
       val case = TestCases.IU.GradleJitPackSimple
         .copy(
