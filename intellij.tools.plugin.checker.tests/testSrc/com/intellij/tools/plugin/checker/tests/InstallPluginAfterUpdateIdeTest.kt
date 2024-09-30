@@ -32,7 +32,6 @@ class InstallPluginAfterUpdateIdeTest {
     private data class ConfigurationData(
         val type: String,
         val url: String,
-        val batchesCount: Int,
         val currentBatchIndex: Int
     )
 
@@ -56,16 +55,16 @@ class InstallPluginAfterUpdateIdeTest {
             return ConfigurationData(
                 propertyNode.getProperty("ide.type"),
                 propertyNode.getProperty("ide.download.url"),
-                propertyNode.getProperty("teamcity.build.parallelTests.totalBatches").toInt(),
-                propertyNode.getProperty("teamcity.build.parallelTests.currentBatch").toInt() - 1,
+                propertyNode.getProperty("batch.index").toInt(),
             )
         }
 
 
-        private fun <T> splitIntoBuckets(list: List<T>, bucketCount: Int): List<List<T>> {
-            val bucketSize = list.size / bucketCount
-            val remainder = list.size % bucketCount
-            return (0 until bucketCount).map { i ->
+        private fun <T> splitIntoBuckets(list: List<T>): List<List<T>> {
+            val batchesCount = 10
+            val bucketSize = list.size / batchesCount
+            val remainder = list.size % batchesCount
+            return (0 until batchesCount).map { i ->
                 val start = i * bucketSize + minOf(i, remainder)
                 val end = (i + 1) * bucketSize + minOf(i + 1, remainder)
                 list.subList(start, end)
@@ -100,8 +99,7 @@ class InstallPluginAfterUpdateIdeTest {
             val plugins = MarketplaceClient.getPluginsForBuild(configurationData.type, context.ide.build).take(20)
 
 
-            val pluginsForThisBucket =
-                splitIntoBuckets(plugins, configurationData.batchesCount)[configurationData.currentBatchIndex]
+            val pluginsForThisBucket = splitIntoBuckets(plugins)[configurationData.currentBatchIndex]
 
             return pluginsForThisBucket.map { Arguments.of(context to it, it.name) }
         }
@@ -117,10 +115,12 @@ class InstallPluginAfterUpdateIdeTest {
         MarketplaceClient.downloadPlugin(plugin, pluginPath.toFile())
         contextWithPlugin.apply { pluginConfigurator.installPluginFromPath(pluginPath) }
 
-        val ideRunContextWithoutPlugin = context.runIDE(launchName = "Run without plugin", commands = CommandChain().exitApp()).runContext
+        val ideRunContextWithoutPlugin =
+            context.runIDE(launchName = "Run without plugin", commands = CommandChain().exitApp()).runContext
         val errorsWithoutPlugin = ErrorReporterToCI.collectErrors(ideRunContextWithoutPlugin.logsDir)
 
-        val ideRunContext = contextWithPlugin.runIDE(launchName = "Run with plugin", commands = CommandChain().exitApp()).runContext
+        val ideRunContext =
+            contextWithPlugin.runIDE(launchName = "Run with plugin", commands = CommandChain().exitApp()).runContext
         val errorsWithPlugin = ErrorReporterToCI.collectErrors(ideRunContext.logsDir)
 
         val diff = subtract(errorsWithPlugin, errorsWithoutPlugin).toList()
